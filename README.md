@@ -10,6 +10,10 @@ The complex steerable pyramid expects a batch of images of shape (`[N,C,H,W]` fo
 
 Please check the scripts in examples/
 
+## Consistnecy
+
+`test_tf_numpy.py` and `test_tf_torch.py` in tests/
+
 ## Benchmark
 
 Performing parallel the CSP decomposition on the GPU results in a significant speed-up. Increasing the batch size will give faster runtimes. The plot below shows a comprison between the `numpy`, `torch` and `tensorflow` implementations as function of the batch size `N` and input signal length. These results were obtained on a powerful Linux desktop with NVIDIA GTX1080Ti GPU.
