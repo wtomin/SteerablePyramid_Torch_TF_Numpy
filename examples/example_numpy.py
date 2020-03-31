@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018 Tom Runia
+# Copyright (c) 2020 Didan Deng
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -9,8 +9,8 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to conditions.
 #
-# Author: Tom Runia
-# Date Created: 2018-12-04
+# Author: Didan Deng
+# Date Created: 2020-03-31
 
 from __future__ import absolute_import
 from __future__ import division
@@ -36,7 +36,9 @@ if __name__ == "__main__":
     parser.add_argument('--pyr_nbands', type=int, default='4')
     parser.add_argument('--pyr_scale_factor', type=int, default='2')
     parser.add_argument('--visualize', type=bool, default=True)
+    parser.add_argument('--precision', type=int, default=32, choices=[32, 64])
     config = parser.parse_args()
+    dtype_np = eval('np.float{}'.format(config.precision))
 
     ############################################################################
     # Build the complex steerable pyramid
@@ -44,7 +46,8 @@ if __name__ == "__main__":
     pyr = SCFpyr_NumPy(
         height=config.pyr_nlevels, 
         nbands=config.pyr_nbands,
-        scale_factor=config.pyr_scale_factor, 
+        scale_factor=config.pyr_scale_factor,  
+        precision = config.precision
     )
 
     ############################################################################
@@ -53,7 +56,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     im_batch_numpy = utils.load_image_batch(config.image_file, config.batch_size, config.image_size)
-    im_batch_numpy = im_batch_numpy.squeeze(1)  # no channel dim for NumPy
+    im_batch_numpy = im_batch_numpy.astype(dtype_np).squeeze(1)  # no channel dim for NumPy
 
     # Compute Steerable Pyramid
     start_time = time.time()
@@ -74,5 +77,6 @@ if __name__ == "__main__":
         coeff_grid = utils.make_grid_coeff(coeff, normalize=True)
         cv2.imshow('image', (im_batch_numpy[0,]*255.).astype(np.uint8))
         cv2.imshow('coeff', coeff_grid)
-        cv2.waitKey(0)
-        
+        k = cv2.waitKey(0)
+        if k == 27:         # wait for ESC key to exit
+            cv2.destroyAllWindows()
