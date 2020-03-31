@@ -21,8 +21,8 @@ Performing parallel the CSP decomposition on the GPU results in a significant sp
 Clone and install:
 
 ```sh
-git clone https://github.com/tomrunia/PyTorchSteerablePyramid.git
-cd PyTorchSteerablePyramid
+https://github.com/wtomin/SteerablePyramid_Torch_TF_Numpy.git
+cd SteerablePyramid_Torch_TF_Numpy
 pip install -r requirements.txt
 python setup.py install
 ```
