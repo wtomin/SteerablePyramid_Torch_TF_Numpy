@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018 Tom Runia
+# Copyright (c) 2020 Didan Deng
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -9,8 +9,8 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to conditions.
 #
-# Author: Tom Runia
-# Date Created: 2018-12-04
+# Author: Didan Deng
+# Date Created: 2020-03-31
 
 from __future__ import absolute_import
 from __future__ import division
@@ -76,7 +76,12 @@ def getlist(coeff):
     straight = [bands for scale in coeff[1:-1] for bands in scale]
     straight = [coeff[0]] + straight + [coeff[-1]]
     return straight
-
+def factorial(n):
+    assert type(n)==int 
+    if n==1:
+        return n
+    else:
+        return n*factorial(n-1)
 ################################################################################
 # NumPy reference implementation (fftshift and ifftshift)
 

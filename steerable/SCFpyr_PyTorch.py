@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018 Tom Runia
+# Copyright (c) 2020 Didan Deng
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -9,8 +9,8 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to conditions.
 #
-# Author: Tom Runia
-# Date Created: 2018-12-04
+# Author: Didan Deng
+# Date Created: 2020-03-31
 
 from __future__ import absolute_import
 from __future__ import division
@@ -18,10 +18,10 @@ from __future__ import print_function
 
 import numpy as np
 import torch
-from scipy.misc import factorial
 
 import steerable.math_utils as math_utils
 pointOp = math_utils.pointOp
+factorial = math_utils.factorial
 
 ################################################################################
 ################################################################################
@@ -48,12 +48,15 @@ class SCFpyr_PyTorch(object):
 
     '''
 
-    def __init__(self, height=5, nbands=4, scale_factor=2, device=None):
+    def __init__(self, height=5, nbands=4, scale_factor=2, device=None, precision=32):
         self.height = height  # including low-pass and high-pass
         self.nbands = nbands  # number of orientation bands
         self.scale_factor = scale_factor
         self.device = torch.device('cpu') if device is None else device
-
+        self.precision = precision
+        assert self.precision in [32, 64]
+        self.dtype = eval('torch.float{}'.format(self.precision))
+        torch.set_default_dtype(self.dtype)
         # Cache constants
         self.lutsize = 1024
         self.Xcosn = np.pi * np.array(range(-(2*self.lutsize+1), (self.lutsize+2)))/self.lutsize
@@ -76,7 +79,7 @@ class SCFpyr_PyTorch(object):
         '''
         
         assert im_batch.device == self.device, 'Devices invalid (pyr = {}, batch = {})'.format(self.device, im_batch.device)
-        assert im_batch.dtype == torch.float32, 'Image batch must be torch.float32'
+        assert im_batch.dtype == self.dtype, 'Image batch must be torch.float{}'.format(self.precision)
         assert im_batch.dim() == 4, 'Image batch must be of shape [N,C,H,W]'
         assert im_batch.shape[1] == 1, 'Second dimension must be 1 encoding grayscale image'
 
@@ -100,8 +103,8 @@ class SCFpyr_PyTorch(object):
         hi0mask = pointOp(log_rad, Yrcos, Xrcos)
 
         # Note that we expand dims to support broadcasting later
-        lo0mask = torch.from_numpy(lo0mask).float()[None,:,:,None].to(self.device)
-        hi0mask = torch.from_numpy(hi0mask).float()[None,:,:,None].to(self.device)
+        lo0mask = torch.from_numpy(lo0mask)[None,:,:,None].to(self.device)
+        hi0mask = torch.from_numpy(hi0mask)[None,:,:,None].to(self.device)
 
         # Fourier transform (2D) and shifting
         batch_dft = torch.rfft(im_batch, signal_ndim=2, onesided=False)
@@ -140,7 +143,7 @@ class SCFpyr_PyTorch(object):
             ####################################################################
 
             himask = pointOp(log_rad, Yrcos, Xrcos)
-            himask = torch.from_numpy(himask[None,:,:,None]).float().to(self.device)
+            himask = torch.from_numpy(himask[None,:,:,None]).to(self.device)
 
             order = self.nbands - 1
             const = np.power(2, 2*order) * np.square(factorial(order)) / (self.nbands * factorial(2*order))
@@ -152,7 +155,7 @@ class SCFpyr_PyTorch(object):
 
                 anglemask = pointOp(angle, Ycosn, self.Xcosn + np.pi*b/self.nbands)
                 anglemask = anglemask[None,:,:,None]  # for broadcasting
-                anglemask = torch.from_numpy(anglemask).float().to(self.device)
+                anglemask = torch.from_numpy(anglemask).to(self.device)
 
                 # Bandpass filtering                
                 banddft = lodft * anglemask * himask
@@ -189,7 +192,7 @@ class SCFpyr_PyTorch(object):
             # Filtering
             YIrcos = np.abs(np.sqrt(1 - Yrcos**2))
             lomask = pointOp(log_rad, YIrcos, Xrcos)
-            lomask = torch.from_numpy(lomask[None,:,:,None]).float()
+            lomask = torch.from_numpy(lomask[None,:,:,None])
             lomask = lomask.to(self.device)
 
             # Convolution in spatial domain
@@ -224,8 +227,8 @@ class SCFpyr_PyTorch(object):
         hi0mask = pointOp(log_rad, Yrcos, Xrcos)
 
         # Note that we expand dims to support broadcasting later
-        lo0mask = torch.from_numpy(lo0mask).float()[None,:,:,None].to(self.device)
-        hi0mask = torch.from_numpy(hi0mask).float()[None,:,:,None].to(self.device)
+        lo0mask = torch.from_numpy(lo0mask)[None,:,:,None].to(self.device)
+        hi0mask = torch.from_numpy(hi0mask)[None,:,:,None].to(self.device)
 
         # Start recursive reconstruction
         tempdft = self._reconstruct_levels(coeff[1:], log_rad, Xrcos, Yrcos, angle)
@@ -255,7 +258,7 @@ class SCFpyr_PyTorch(object):
         ####################################################################
 
         himask = pointOp(log_rad, Yrcos, Xrcos)
-        himask = torch.from_numpy(himask[None,:,:,None]).float().to(self.device)
+        himask = torch.from_numpy(himask[None,:,:,None]).to(self.device)
 
         lutsize = 1024
         Xcosn = np.pi * np.array(range(-(2*lutsize+1), (lutsize+2)))/lutsize
@@ -268,7 +271,7 @@ class SCFpyr_PyTorch(object):
 
             anglemask = pointOp(angle, Ycosn, Xcosn + np.pi * b/self.nbands)
             anglemask = anglemask[None,:,:,None]  # for broadcasting
-            anglemask = torch.from_numpy(anglemask).float().to(self.device)
+            anglemask = torch.from_numpy(anglemask).to(self.device)
 
             banddft = torch.fft(coeff[0][b], signal_ndim=2)
             banddft = math_utils.batch_fftshift2d(banddft)
@@ -298,7 +301,7 @@ class SCFpyr_PyTorch(object):
         # Filtering
         lomask = pointOp(nlog_rad, YIrcos, Xrcos)
         lomask = torch.from_numpy(lomask[None,:,:,None])
-        lomask = lomask.float().to(self.device)
+        lomask = lomask.to(self.device)
 
         ################################################################################
 

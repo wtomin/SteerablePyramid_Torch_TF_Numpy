@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018 Tom Runia
+# Copyright (c) 2020 Didan Deng
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -9,8 +9,8 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to conditions.
 #
-# Author: Tom Runia
-# Date Created: 2018-12-10
+# Author: Didan Deng
+# Date Created: 2020-03-31
 
 from __future__ import absolute_import
 from __future__ import division
@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 import torch
 import torchvision
+import tensorflow as tf
 
 ################################################################################
 
@@ -91,15 +92,24 @@ def extract_from_batch(coeff_batch, example_idx=0):
             # Low- or High-Pass
             coeff_level_numpy = coeff_level[example_idx].cpu().numpy()
             coeff.append(coeff_level_numpy)
+        elif isinstance(coeff_level, tf.Tensor):
+            # Low- or High-Pass
+            coeff_level_numpy = coeff_level[example_idx].numpy()
+            coeff.append(coeff_level_numpy)
         elif isinstance(coeff_level, list):
             coeff_orientations_numpy = []
             for coeff_orientation in coeff_level:
-                coeff_orientation_numpy = coeff_orientation[example_idx].cpu().numpy()
-                coeff_orientation_numpy = coeff_orientation_numpy[:,:,0] + 1j*coeff_orientation_numpy[:,:,1]
+                if isinstance(coeff_orientation, torch.Tensor):
+                    coeff_orientation_numpy = coeff_orientation[example_idx].cpu().numpy()
+                    coeff_orientation_numpy = coeff_orientation_numpy[:,:,0] + 1j*coeff_orientation_numpy[:,:,1]
+                elif isinstance(coeff_orientation, tf.Tensor):
+                    coeff_orientation_numpy = coeff_orientation[example_idx].numpy() 
+                else:
+                    raise ValueError('coeff orientation must be of type (list, torch.Tensor, tf.Tensor)')
                 coeff_orientations_numpy.append(coeff_orientation_numpy)
             coeff.append(coeff_orientations_numpy)
         else:
-            raise ValueError('coeff leve must be of type (list, torch.Tensor)')
+            raise ValueError('coeff level must be of type (list, torch.Tensor, tf.Tensor)')
     return coeff
 
 ################################################################################
