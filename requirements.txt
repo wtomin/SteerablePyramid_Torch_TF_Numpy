@@ -1,6 +1,6 @@
 six
 numpy
-scipy
 torch >= 0.4.0
+tensorflow-gpu >= 2.1.0
 matplotlib
 pillow
