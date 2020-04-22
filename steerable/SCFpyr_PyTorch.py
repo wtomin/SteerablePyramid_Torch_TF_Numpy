@@ -103,8 +103,8 @@ class SCFpyr_PyTorch(object):
         hi0mask = pointOp(log_rad, Yrcos, Xrcos)
 
         # Note that we expand dims to support broadcasting later
-        lo0mask = torch.from_numpy(lo0mask)[None,:,:,None].to(self.device)
-        hi0mask = torch.from_numpy(hi0mask)[None,:,:,None].to(self.device)
+        lo0mask = torch.from_numpy(lo0mask)[None,:,:,None].type(self.dtype).to(self.device)
+        hi0mask = torch.from_numpy(hi0mask)[None,:,:,None].type(self.dtype).to(self.device)
 
         # Fourier transform (2D) and shifting
         batch_dft = torch.rfft(im_batch, signal_ndim=2, onesided=False)
