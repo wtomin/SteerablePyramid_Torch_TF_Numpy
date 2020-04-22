@@ -143,7 +143,7 @@ class SCFpyr_PyTorch(object):
             ####################################################################
 
             himask = pointOp(log_rad, Yrcos, Xrcos)
-            himask = torch.from_numpy(himask[None,:,:,None]).to(self.device)
+            himask = torch.from_numpy(himask[None,:,:,None]).type(self.dtype).to(self.device)
 
             order = self.nbands - 1
             const = np.power(2, 2*order) * np.square(factorial(order)) / (self.nbands * factorial(2*order))
@@ -155,7 +155,7 @@ class SCFpyr_PyTorch(object):
 
                 anglemask = pointOp(angle, Ycosn, self.Xcosn + np.pi*b/self.nbands)
                 anglemask = anglemask[None,:,:,None]  # for broadcasting
-                anglemask = torch.from_numpy(anglemask).to(self.device)
+                anglemask = torch.from_numpy(anglemask).type(self.dtype).to(self.device)
 
                 # Bandpass filtering                
                 banddft = lodft * anglemask * himask
@@ -192,7 +192,7 @@ class SCFpyr_PyTorch(object):
             # Filtering
             YIrcos = np.abs(np.sqrt(1 - Yrcos**2))
             lomask = pointOp(log_rad, YIrcos, Xrcos)
-            lomask = torch.from_numpy(lomask[None,:,:,None])
+            lomask = torch.from_numpy(lomask[None,:,:,None]).type(self.dtype)
             lomask = lomask.to(self.device)
 
             # Convolution in spatial domain
@@ -227,8 +227,8 @@ class SCFpyr_PyTorch(object):
         hi0mask = pointOp(log_rad, Yrcos, Xrcos)
 
         # Note that we expand dims to support broadcasting later
-        lo0mask = torch.from_numpy(lo0mask)[None,:,:,None].to(self.device)
-        hi0mask = torch.from_numpy(hi0mask)[None,:,:,None].to(self.device)
+        lo0mask = torch.from_numpy(lo0mask)[None,:,:,None].type(self.dtype).to(self.device)
+        hi0mask = torch.from_numpy(hi0mask)[None,:,:,None].type(self.dtype).to(self.device)
 
         # Start recursive reconstruction
         tempdft = self._reconstruct_levels(coeff[1:], log_rad, Xrcos, Yrcos, angle)
@@ -258,7 +258,7 @@ class SCFpyr_PyTorch(object):
         ####################################################################
 
         himask = pointOp(log_rad, Yrcos, Xrcos)
-        himask = torch.from_numpy(himask[None,:,:,None]).to(self.device)
+        himask = torch.from_numpy(himask[None,:,:,None]).type(self.dtype).to(self.device)
 
         lutsize = 1024
         Xcosn = np.pi * np.array(range(-(2*lutsize+1), (lutsize+2)))/lutsize
@@ -271,7 +271,7 @@ class SCFpyr_PyTorch(object):
 
             anglemask = pointOp(angle, Ycosn, Xcosn + np.pi * b/self.nbands)
             anglemask = anglemask[None,:,:,None]  # for broadcasting
-            anglemask = torch.from_numpy(anglemask).to(self.device)
+            anglemask = torch.from_numpy(anglemask).type(self.dtype).to(self.device)
 
             banddft = torch.fft(coeff[0][b], signal_ndim=2)
             banddft = math_utils.batch_fftshift2d(banddft)
@@ -300,7 +300,7 @@ class SCFpyr_PyTorch(object):
 
         # Filtering
         lomask = pointOp(nlog_rad, YIrcos, Xrcos)
-        lomask = torch.from_numpy(lomask[None,:,:,None])
+        lomask = torch.from_numpy(lomask[None,:,:,None]).type(self.dtype)
         lomask = lomask.to(self.device)
 
         ################################################################################
